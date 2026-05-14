@@ -1,121 +1,90 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { Container, Typography, Box, Dialog, DialogTitle, DialogContent } from '@mui/material';
+import SearchBar from './components/SearchBar';
+import EventsTable from './components/EventsTable';
+import { searchEvents, type Event, type SearchResponse } from './api/events';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [result, setResult] = useState<SearchResponse>({
+    data: [],
+    total: 0,
+    page: 1,
+    limit: 50,
+  });
+
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [currentFilter, setCurrentFilter] = useState('');
+  const [currentStartTime, setCurrentStartTime] = useState('');
+  const [currentEndTime, setCurrentEndTime] = useState('');
+
+  const handleSearch = async (filter: string, startTime: string, endTime: string) => {
+    setCurrentFilter(filter);
+    setCurrentStartTime(startTime);
+    setCurrentEndTime(endTime);
+
+    const res = await searchEvents({
+      filter: filter || undefined,
+      startTime: startTime ? new Date(startTime).toISOString() : undefined,
+      endTime: endTime ? new Date(endTime).toISOString() : undefined,
+      page: 1,
+      limit: 50,
+    });
+    setResult(res);
+  };
+
+  const handlePageChange = async (page: number) => {
+    const res = await searchEvents({
+      filter: currentFilter || undefined,
+      startTime: currentStartTime ? new Date(currentStartTime).toISOString() : undefined,
+      endTime: currentEndTime ? new Date(currentEndTime).toISOString() : undefined,
+      page,
+      limit: 50,
+    });
+    setResult(res);
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Container maxWidth="xl" sx={{ py: 3 }}>
+      <Typography variant="h4" sx={{ mb: 3 }}>
+        SIEM Core - Event Search
+      </Typography>
 
-      <div className="ticks"></div>
+      <SearchBar onSearch={handleSearch} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <Typography variant="body2" sx={{ mb: 1 }} color="text.secondary">
+        {result.total} events found
+      </Typography>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      <EventsTable
+        events={result.data}
+        total={result.total}
+        page={result.page}
+        limit={result.limit}
+        onPageChange={handlePageChange}
+        onRowClick={(event) => setSelectedEvent(event)}
+      />
+
+      <Dialog
+        open={selectedEvent !== null}
+        onClose={() => setSelectedEvent(null)}
+        maxWidth="md"
+        fullWidth
+      >
+        {selectedEvent && (
+          <>
+            <DialogTitle>
+              {selectedEvent.metadata_eventType} - {selectedEvent.metadata_logType}
+            </DialogTitle>
+            <DialogContent>
+              <Box component="pre" sx={{ fontSize: 13, overflow: 'auto' }}>
+                {JSON.stringify(selectedEvent, null, 2)}
+              </Box>
+            </DialogContent>
+          </>
+        )}
+      </Dialog>
+    </Container>
+  );
 }
 
 export default App
