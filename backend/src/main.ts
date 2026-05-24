@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -9,6 +10,9 @@ async function bootstrap() {
   app.enableCors({
     origin: 'http://localhost:5173',
   })
+
+  // リクエストボディの上限を10MBに引き上げ
+  app.use(json({ limit: '10mb' }));
 
   const config = new DocumentBuilder()
     .setTitle('SIEM Core API')

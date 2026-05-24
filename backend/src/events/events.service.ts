@@ -43,14 +43,58 @@ export class EventsService {
     }
 
     async createBulk(dtos: CreateEventDto[]) {
-        let count = 0;
-        
-        for (const dto of dtos) {
-            await this.create(dto);
-            count++;
+
+        // 1. eventsを一括INSERT
+        await this.prisma.event.createMany({
+            data: dtos.map((dto) => ({
+                metadata_eventTimestamp: new Date(dto.metadata_eventTimestamp),
+                metadata_eventType: dto.metadata_eventType,
+                metadata_logType: dto.metadata_logType,
+                metadata_vendorName: dto.metadata_vendorName,
+                metadata_productName: dto.metadata_productName,
+                principal_hostname: dto.principal_hostname,
+                principal_ip: dto.principal_ip,
+                principal_user_userid: dto.principal_user_userid,
+                principal_user_email: dto.principal_user_email,
+                principal_process_pid: dto.principal_process_pid,
+                principal_process_commandLine: dto.principal_process_commandLine,
+                target_hostname: dto.target_hostname,
+                target_ip: dto.target_ip,
+                target_user_userid: dto.target_user_userid,
+                target_user_email: dto.target_user_email,
+                target_url: dto.target_url,
+                target_resourceName: dto.target_resourceName,
+            })),
+        });
+
+        // 2. 作成したeventsのIDを取得（直近のN件）
+        const createdEvents = await this.prisma.event.findMany({
+            orderBy: { metadata_ingestedTimestamp: 'desc' },
+            take: dtos.length,
+            select: { id: true },
+        });
+
+        // 3. securityResultsを一括INSERT
+        const securityResultsData = dtos.flatMap((dto, index) => {
+            if (!dto.securityResults?.length) return [];
+            const eventId = createdEvents[index]?.id;
+            if (!eventId) return [];
+            return dto.securityResults.map((sr) => ({
+                eventId,
+                action: sr.action,
+                severity: sr.severity,
+                description: sr.description,
+                category: sr.category,
+            }));
+        });
+
+        if (securityResultsData.length > 0) {
+            await this.prisma.securityResult.createMany({
+                data: securityResultsData,
+            });
         }
 
-        return { count, message: `{count} events created successfully` };
+        return { count: dtos.length, message: `${dtos.length} events created successfully` };
     }
 
     async search(dto: SearchEventDto) {
