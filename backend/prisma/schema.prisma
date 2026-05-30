@@ -3,22 +3,133 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output = "../generated/prisma"
   moduleFormat = "cjs"
 }
 
 generator erd {
   provider = "prisma-erd-generator"
-  output   = "../ERD.md"
-  theme    = "default"
+  output = "../ERD.md"
+  theme = "default"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
+// ==============================
+// テナント
+// ==============================
+model Tenant {
+  id   String @id @default(uuid())
+  name String
+
+  // ---- リレーション ----
+  users           User[]
+  functionalRoles FunctionalRole[]
+  dataRoles       DataRole[]
+  namespaces      Namespace[]
+  events          Event[]
+
+  @@map("tenants")
+}
+
+// ==============================
+// ユーザー
+// ==============================
+model User {
+  tenantId         String
+  id               String @default(uuid())
+  name             String
+  email            String @unique
+  passwordHash     String
+  functionalRoleId String
+  dataRoleId       String
+
+  // ---- リレーション ----
+  tenant         Tenant         @relation(fields: [tenantId], references: [id])
+  functionalRole FunctionalRole @relation(fields: [tenantId, functionalRoleId], references: [tenantId, id])
+  dataRole       DataRole       @relation(fields: [tenantId, dataRoleId], references: [tenantId, id])
+
+  @@id([tenantId, id])
+  @@map("users")
+}
+
+// ==============================
+// 機能ロール
+// ==============================
+model FunctionalRole {
+  tenantId String
+  id       String @default(uuid())
+  name     String
+
+  // ---- リレーション ----
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  users  User[]
+
+  @@id([tenantId, id])
+  @@map("functional_roles")
+}
+
+// ==============================
+// データロール
+// ==============================
+model DataRole {
+  tenantId String
+  id       String @default(uuid())
+  name     String
+
+  // ---- リレーション ----
+  tenant     Tenant              @relation(fields: [tenantId], references: [id])
+  users      User[]
+  namespaces DataRoleNamespace[]
+
+  @@id([tenantId, id])
+  @@map("data_roles")
+}
+
+// ==============================
+// Namespace
+// ==============================
+model Namespace {
+  tenantId String
+  id       String @default(uuid())
+  name     String
+
+  // ---- リレーション ----
+  tenant    Tenant              @relation(fields: [tenantId], references: [id])
+  events    Event[]
+  dataRoles DataRoleNamespace[]
+
+  @@id([tenantId, id])
+  @@map("namespaces")
+}
+
+// ==============================
+// データロール - Namespace（中間テーブル）
+// ==============================
+model DataRoleNamespace {
+  tenantId    String
+  dataRoleId  String
+  namespaceId String
+
+  // ---- リレーション ----
+  dataRole  DataRole  @relation(fields: [tenantId, dataRoleId], references: [tenantId, id])
+  namespace Namespace @relation(fields: [tenantId, namespaceId], references: [tenantId, id])
+
+  @@id([tenantId, dataRoleId, namespaceId])
+  @@map("data_role_namespaces")
+}
+
+// ==============================
+// イベント
+// ==============================
 model Event {
   id String @id @default(uuid())
+
+  // ---- テナント・Namespace ----
+  tenantId    String
+  namespaceId String
 
   // ---- metadata ----
   metadata_eventTimestamp   DateTime
@@ -45,9 +156,13 @@ model Event {
   target_resourceName  String?
 
   // ---- リレーション ----
+  tenant          Tenant          @relation(fields: [tenantId], references: [id])
+  namespace       Namespace       @relation(fields: [tenantId, namespaceId], references: [tenantId, id])
   securityResults SecurityResult[]
 
   // ---- インデックス ----
+  @@index([tenantId])
+  @@index([tenantId, namespaceId])
   @@index([metadata_eventType, metadata_eventTimestamp])
   @@index([metadata_logType])
   @@index([principal_user_userid])
@@ -57,6 +172,9 @@ model Event {
   @@map("events")
 }
 
+// ==============================
+// セキュリティ結果
+// ==============================
 model SecurityResult {
   id      String @id @default(uuid())
   eventId String
