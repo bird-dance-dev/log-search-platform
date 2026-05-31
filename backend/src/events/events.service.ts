@@ -10,6 +10,8 @@ export class EventsService {
     async create(dto: CreateEventDto) {
         return this.prisma.event.create({
             data: {
+                tenantId: 'TODO',
+                namespaceId: 'TODO',
                 metadata_eventTimestamp: new Date(dto.metadata_eventTimestamp),
                 metadata_eventType: dto.metadata_eventType,
                 metadata_logType: dto.metadata_logType,
@@ -47,6 +49,8 @@ export class EventsService {
         // 1. eventsを一括INSERT
         await this.prisma.event.createMany({
             data: dtos.map((dto) => ({
+                tenantId: 'TODO',
+                namespaceId: 'TODO',
                 metadata_eventTimestamp: new Date(dto.metadata_eventTimestamp),
                 metadata_eventType: dto.metadata_eventType,
                 metadata_logType: dto.metadata_logType,

@@ -46,7 +46,7 @@ function App() {
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
       <Typography variant="h4" sx={{ mb: 3 }}>
-        SIEM Core - Event Search
+        Log Search Platform - Event Search
       </Typography>
 
       <SearchBar onSearch={handleSearch} />

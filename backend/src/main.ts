@@ -15,8 +15,8 @@ async function bootstrap() {
   app.use(json({ limit: '10mb' }));
 
   const config = new DocumentBuilder()
-    .setTitle('SIEM Core API')
-    .setDescription('監査ログの取り込みと検索のためのREST API')
+    .setTitle('Log Search Platform API')
+    .setDescription('ログ検索プラットフォームのREST API')
     .setVersion('1.0')
     .build();
 
