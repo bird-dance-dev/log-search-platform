@@ -7,10 +7,10 @@ import { SearchEventDto } from './dto/search-event.dto.js';
 export class EventsService {
     constructor(private prisma: PrismaService) {}
 
-    async create(dto: CreateEventDto) {
+    async create(tenantId: string, dto: CreateEventDto) {
         return this.prisma.event.create({
             data: {
-                tenantId: 'TODO',
+                tenantId,
                 namespaceId: 'TODO',
                 metadata_eventTimestamp: new Date(dto.metadata_eventTimestamp),
                 metadata_eventType: dto.metadata_eventType,
@@ -44,12 +44,12 @@ export class EventsService {
         });
     }
 
-    async createBulk(dtos: CreateEventDto[]) {
+    async createBulk(tenantId: string, dtos: CreateEventDto[]) {
 
         // 1. eventsを一括INSERT
         await this.prisma.event.createMany({
             data: dtos.map((dto) => ({
-                tenantId: 'TODO',
+                tenantId,
                 namespaceId: 'TODO',
                 metadata_eventTimestamp: new Date(dto.metadata_eventTimestamp),
                 metadata_eventType: dto.metadata_eventType,
@@ -73,6 +73,7 @@ export class EventsService {
 
         // 2. 作成したeventsのIDを取得（直近のN件）
         const createdEvents = await this.prisma.event.findMany({
+            where: { tenantId },
             orderBy: { metadata_ingestedTimestamp: 'desc' },
             take: dtos.length,
             select: { id: true },
@@ -101,12 +102,12 @@ export class EventsService {
         return { count: dtos.length, message: `${dtos.length} events created successfully` };
     }
 
-    async search(dto: SearchEventDto) {
+    async search(tenantId: string, dto: SearchEventDto) {
         const page = Number(dto.page) || 1;
         const limit = Number(dto.limit) || 50;
         const skip = (page - 1) * limit;
         
-        const where: any = {};
+        const where: any = { tenantId };
 
         if (dto.startTime || dto.endTime) {
             where.metadata_eventTimestamp = {};
@@ -137,13 +138,13 @@ export class EventsService {
         return { data, total, page, limit };
     }
 
-    async findOne(id: string) {
+    async findOne(tenantId: string, id: string) {
         const event = await this.prisma.event.findUnique({
             where: { id },
             include: { securityResults: true },
         });
 
-        if (!event) {
+        if (!event || event.tenantId !== tenantId) {
             throw new NotFoundException(`Event ${id} not found`);
         }
 
@@ -168,10 +169,10 @@ export class EventsService {
         const where: any = {};
 
         for (const condition of conditions) {
-        const parsed = this.parseCondition(condition.trim());
-        if (parsed) {
-            Object.assign(where, parsed);
-        }
+            const parsed = this.parseCondition(condition.trim());
+            if (parsed) {
+                Object.assign(where, parsed);
+            }
         }
 
         return where;
