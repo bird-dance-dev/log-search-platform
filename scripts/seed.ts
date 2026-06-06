@@ -8,19 +8,25 @@ import { Command } from 'commander';
 
 const API_URL = 'http://localhost:3000';
 const BATCH_SIZE = 500;
+// サンプルアカウント（トークン使用のため）
+const TENANT_ACCOUNTS = [
+  { email: 'user-a@example.com', password: 'password123' },
+  { email: 'user-c@example.com', password: 'password123' },
+];
 
-// ---- 共通ヘルパー ----
+// サンプルデータ定義
 const hostnames = Array.from({ length: 50 }, (_, i) => `pc-${String(i + 1).padStart(3, '0')}`);
 const servernames = Array.from({ length: 10 }, (_, i) => `srv-${String(i + 1).padStart(3, '0')}`);
 const userIds = ['tanaka', 'suzuki', 'yamamoto', 'sato', 'takahashi', 'kobayashi', 'watanabe', 'ito', 'nakamura', 'kato'];
 const domains = ['corp.example.com'];
 
+// サンプルユーザー生成
 function randomUser() {
   const id = faker.helpers.arrayElement(userIds);
   return { userid: id, email: `${id}@${domains[0]}` };
 }
 
-// ---- ログタイプ別の定義 ----
+// ログタイプ別の定義
 const LOG_TYPE_CONFIGS = {
   MICROSOFT_DEFENDER_ENDPOINT: {
     vendorName: 'Microsoft',
@@ -457,15 +463,16 @@ const LOG_TYPE_CONFIGS = {
     },
   },
 };
-
+// ログタイプ型を定義
 type LogType = keyof typeof LOG_TYPE_CONFIGS;
 
-// ---- イベント生成 ----
-function generateEvent(logType: LogType) {
+// サンプルイベント生成
+function generateEvent(logType: LogType, namespaceId: string) {
   const config = LOG_TYPE_CONFIGS[logType];
   const fields = config.generate();
 
   return {
+    namespaceId,
     metadata_eventTimestamp: faker.date.recent({ days: 30 }).toISOString(),
     metadata_eventType: faker.helpers.arrayElement(config.eventTypes),
     metadata_logType: logType,
@@ -476,55 +483,79 @@ function generateEvent(logType: LogType) {
   };
 }
 
-// ---- API送信 ----
-async function sendBatch(events: any[]) {
-  const response = await axios.post(`${API_URL}/events/bulk`, { events });
+// ログインしてトークンを取得
+async function login(email: string, password: string): Promise<string> {
+  const response = await axios.post(`${API_URL}/auth/login`, { email, password });
+  return response.data.accessToken;
+}
+
+// Namespace一覧を取得
+async function getNamespaces(token: string): Promise<any[]> {
+  const response = await axios.get(`${API_URL}/settings/namespaces`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   return response.data;
 }
 
-// ---- メイン処理 ----
+// 一括登録
+async function sendBatch(events: any[], token: string) {
+  const response = await axios.post(
+    `${API_URL}/events/bulk`,
+    { events },
+    { 
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  return response.data;
+}
+
+// メイン処理
 async function main() {
   const program = new Command();
   program
-    .option('--log-type <type>', 'ログタイプ（省略時は全タイプを均等に生成）')
-    .requiredOption('--count <number>', '生成件数', parseInt)
+    .requiredOption('--count <number>', '生成件数（テナントあたり）', parseInt)
     .parse();
 
   const opts = program.opts();
   const count = opts.count as number;
-  const logTypes = opts.logType
-    ? [opts.logType as LogType]
-    : Object.keys(LOG_TYPE_CONFIGS) as LogType[];
-
-  if (opts.logType && !LOG_TYPE_CONFIGS[opts.logType as LogType]) {
-    console.error(`無効なログタイプ: ${opts.logType}`);
-    console.error(`有効な値: ${Object.keys(LOG_TYPE_CONFIGS).join(', ')}`);
-    process.exit(1);
-  }
-
+  const logTypes = Object.keys(LOG_TYPE_CONFIGS) as LogType[];
   const perType = Math.ceil(count / logTypes.length);
-  console.log(`\n📦 ${logTypes.length} ログタイプ × ${perType} 件 = 合計 ${perType * logTypes.length} 件を生成します\n`);
+  console.log(`${TENANT_ACCOUNTS.length} テナント × ${logTypes.length} ログタイプ × ${perType} 件\n`);
 
   let totalSent = 0;
   const startTime = Date.now();
 
-  for (const logType of logTypes) {
-    console.log(`\n🔹 ${logType} (${LOG_TYPE_CONFIGS[logType].productName})`);
+  for (const account of TENANT_ACCOUNTS) {
+    // ログインしてトークン取得
+    console.log(`${account.email} でログイン...`);
+    const token = await login(account.email, account.password);
 
-    for (let i = 0; i < perType; i += BATCH_SIZE) {
-      const batchSize = Math.min(BATCH_SIZE, perType - i);
-      const events = Array.from({ length: batchSize }, () => generateEvent(logType));
+    // namespace一覧を取得
+    const namespaces = await getNamespaces(token);
+    console.log(`Namespace: ${namespaces.map((ns: any) => ns.name).join(', ')}`);
 
-      const result = await sendBatch(events);
-      totalSent += result.count;
+    // ログタイプごとにイベント生成・投入
+    for (const logType of logTypes) {
+      console.log(`${logType} (${LOG_TYPE_CONFIGS[logType].productName})`);
 
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      console.log(`  ✅ ${totalSent} 件完了 (${elapsed}s)`);
+      for (let i = 0; i < perType; i += BATCH_SIZE) {
+        const batchSize = Math.min(BATCH_SIZE, perType - i);
+        const events = Array.from({ length: batchSize }, () => {
+          const namespace = faker.helpers.arrayElement(namespaces);
+          return generateEvent(logType, namespace.id);
+        });
+
+        const result = await sendBatch(events, token);
+        totalSent += result.count;
+
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log(`${totalSent} 件完了 (${elapsed}s)`);
+      }
     }
   }
 
   const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
-  console.log(`\n🎉 完了！${totalSent} 件を ${totalTime} 秒で投入しました\n`);
+  console.log(`${totalSent} 件を ${totalTime} 秒で投入完了しました\n`);
 }
 
 main().catch((err) => {

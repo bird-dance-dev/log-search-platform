@@ -11,7 +11,7 @@ export class EventsService {
         return this.prisma.event.create({
             data: {
                 tenantId,
-                namespaceId: 'TODO',
+                namespaceId: dto.namespaceId,
                 metadata_eventTimestamp: new Date(dto.metadata_eventTimestamp),
                 metadata_eventType: dto.metadata_eventType,
                 metadata_logType: dto.metadata_logType,
@@ -50,7 +50,7 @@ export class EventsService {
         await this.prisma.event.createMany({
             data: dtos.map((dto) => ({
                 tenantId,
-                namespaceId: 'TODO',
+                namespaceId: dto.namespaceId,
                 metadata_eventTimestamp: new Date(dto.metadata_eventTimestamp),
                 metadata_eventType: dto.metadata_eventType,
                 metadata_logType: dto.metadata_logType,

@@ -15,6 +15,10 @@ class CreateSecurityResultDto {
 }
 
 export class CreateEventDto {
+  // ---- namespace ----
+  @ApiProperty({ example: 'namespace-uuid', description: 'NamespaceのID' })
+  namespaceId!: string;
+
   // ---- metadata ----
   @ApiProperty({ example: '2026-04-10T10:00:00Z', description: 'イベント発生日時' })
   metadata_eventTimestamp!: string;
