@@ -46,7 +46,7 @@ export class EventsService {
 
     async createBulk(tenantId: string, dtos: CreateEventDto[]) {
 
-        // 1. eventsを一括INSERT
+        // eventsを一括INSERT
         await this.prisma.event.createMany({
             data: dtos.map((dto) => ({
                 tenantId,
@@ -71,7 +71,7 @@ export class EventsService {
             })),
         });
 
-        // 2. 作成したeventsのIDを取得（直近のN件）
+        // 作成したeventsのIDを取得（直近のN件）
         const createdEvents = await this.prisma.event.findMany({
             where: { tenantId },
             orderBy: { metadata_ingestedTimestamp: 'desc' },
@@ -79,7 +79,7 @@ export class EventsService {
             select: { id: true },
         });
 
-        // 3. securityResultsを一括INSERT
+        // securityResultsを一括INSERT
         const securityResultsData = dtos.flatMap((dto, index) => {
             if (!dto.securityResults?.length) return [];
             const eventId = createdEvents[index]?.id;
