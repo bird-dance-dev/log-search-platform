@@ -102,12 +102,22 @@ export class EventsService {
         return { count: dtos.length, message: `${dtos.length} events created successfully` };
     }
 
-    async search(tenantId: string, dto: SearchEventDto) {
+    async search(tenantId: string, dataRoleId: string, dto: SearchEventDto) {
         const page = Number(dto.page) || 1;
         const limit = Number(dto.limit) || 50;
         const skip = (page - 1) * limit;
+
+        // データロールに紐づく許可されたnamespaceIdを取得
+        const allowedNamespaces = await this.prisma.dataRoleNamespace.findMany({
+            where: { tenantId, dataRoleId },
+            select: { namespaceId: true },
+        });
+        const allowedNamespaceIds = allowedNamespaces.map(ns => ns.namespaceId);
         
-        const where: any = { tenantId };
+        const where: any = {
+            tenantId,
+            namespaceId: { in: allowedNamespaceIds },
+        };
 
         if (dto.startTime || dto.endTime) {
             where.metadata_eventTimestamp = {};
@@ -138,13 +148,25 @@ export class EventsService {
         return { data, total, page, limit };
     }
 
-    async findOne(tenantId: string, id: string) {
-        const event = await this.prisma.event.findUnique({
-            where: { id },
+    async findOne(tenantId: string, dataRoleId: string, id: string) {
+
+        // データロールに紐づく許可されたnamespaceIdを取得
+        const allowedNamespaces = await this.prisma.dataRoleNamespace.findMany({
+            where: { tenantId, dataRoleId },
+            select: { namespaceId: true },
+        });
+        const allowedNamespaceIds = allowedNamespaces.map(ns => ns.namespaceId);
+
+        const event = await this.prisma.event.findFirst({
+            where: {
+                id,
+                tenantId,
+                namespaceId: { in: allowedNamespaceIds },
+            },
             include: { securityResults: true },
         });
 
-        if (!event || event.tenantId !== tenantId) {
+        if (!event) {
             throw new NotFoundException(`Event ${id} not found`);
         }
 

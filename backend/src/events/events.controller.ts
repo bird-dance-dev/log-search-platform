@@ -36,7 +36,7 @@ export class EventsController {
   @ApiOperation({ summary: 'イベント検索', description: 'UDMフィールドのfilter条件でイベントを検索する' })
   @ApiResponse({ status: 200, description: '検索成功' })
   search(@Request() req: any, @Query() searchEventDto: SearchEventDto) {
-    return this.eventsService.search(req.user.tenantId, searchEventDto);
+    return this.eventsService.search(req.user.tenantId, req.user.dataRoleId, searchEventDto);
   }
 
   @Get(':id')
@@ -45,6 +45,6 @@ export class EventsController {
   @ApiResponse({ status: 200, description: '取得成功' })
   @ApiResponse({ status: 404, description: 'イベントが見つからない' })
   findOne(@Request() req: any, @Param('id') id: string) {
-    return this.eventsService.findOne(req.user.tenantId, id);
+    return this.eventsService.findOne(req.user.tenantId, req.user.dataRoleId, id);
   }
 }
