@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 @Injectable()
@@ -31,9 +31,13 @@ export class SettingsService {
   async updateUserDataRole(tenantId: string, userId: string, dataRoleId: string) {
     const user = await this.prisma.user.findFirst({
       where: { tenantId, id: userId },
+      include: { functionalRole: true },
     });
     if (!user) {
       throw new NotFoundException(`User ${userId} not found`);
+    }
+    if (user.functionalRole.name === '管理者') {
+      throw new ForbiddenException('管理者のデータロールは変更できません');
     }
     return this.prisma.user.update({
       where: { tenantId_id: { tenantId, id: userId } },
