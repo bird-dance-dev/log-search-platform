@@ -21,3 +21,6 @@ graph LR
   NestJS -- "INSERT / SELECT" --> PG
   NestJS -- "検索結果" --> React
   ```
+
+## ER図
+![ER図](./backend/ERD.svg)
