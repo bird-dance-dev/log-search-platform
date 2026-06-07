@@ -24,4 +24,4 @@ graph LR
   ```
 
 ## ER図
-![ER図](./backend/ERD.md)
+[ER図](./backend/ERD.md)
