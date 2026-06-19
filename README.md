@@ -78,9 +78,9 @@ graph LR
 
 | ユーザー | テナント | 機能RBAC | データRBAC | メールアドレス | パスワード |
 |---------|---------|---------|-----------|--------------|-----------|
-| A | A社 | 管理者 | namespace A, B, C | user-a@example.com | password123 |
-| B | A社 | 一般ユーザー | namespace A のみ | user-b@example.com | password123 |
-| C | B社 | 管理者 | namespace D, E, F | user-c@example.com | password123 |
-| D | B社 | 一般ユーザー | namespace D のみ | user-d@example.com | password123 |
+| A | A社 | 管理者 | namespace A, B, C | `user-a@example.com` | password123 |
+| B | A社 | 一般ユーザー | namespace A のみ | `user-b@example.com` | password123 |
+| C | B社 | 管理者 | namespace D, E, F | `user-c@example.com` | password123 |
+| D | B社 | 一般ユーザー | namespace D のみ | `user-d@example.com` | password123 |
 
 ※パスワードはデモ用です
