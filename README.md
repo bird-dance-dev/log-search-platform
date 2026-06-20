@@ -86,7 +86,7 @@ graph LR
 | C | B社 | 管理者 | namespace D, E, F | `user-c@example.com` | password123 |
 | D | B社 | 一般ユーザー | namespace D のみ | `user-d@example.com` | password123 |
 
-※パスワードはデモ用です
+※ パスワードはデモ用です
 
 ## セットアップ手順
 ```bash
@@ -116,7 +116,7 @@ docker compose up
 
 ## API一覧（Swagger）
 http://localhost:3000/api#/ \
-※開発・テスト用
+※ 開発・テスト用
 
 ## ローカル開発
 PostgreSQLのみDockerで起動し、backend・frontendはローカルで動かす方法です。
