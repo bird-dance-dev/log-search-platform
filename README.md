@@ -27,7 +27,7 @@ graph LR
   end
 
   subgraph Frontend
-    React[React SPA\nログ検索画面]
+    React[React SPA\nログ検索・設定画面]
   end
 
   subgraph Backend
@@ -38,11 +38,12 @@ graph LR
     PG[(PostgreSQL)]
   end
 
-  Seed -- "POST /audit-logs\n大量ログ投入" --> NestJS
-  React -- "GET /audit-logs\n検索リクエスト" --> NestJS
+  Seed -- "POST /events/bulk\n大量ログ投入" --> NestJS
+  React -- "GET /events\nログ検索" --> NestJS
+  React -- "GET・PATCH /settings\nユーザー・権限設定" --> NestJS
   NestJS -- "INSERT / SELECT" --> PG
-  NestJS -- "検索結果" --> React
-  ```
+  NestJS -- "検索・設定結果" --> React
+```
 ### 認証・認可フロー
 ```mermaid
 graph LR
@@ -84,3 +85,54 @@ graph LR
 | D | B社 | 一般ユーザー | namespace D のみ | `user-d@example.com` | password123 |
 
 ※パスワードはデモ用です
+
+## セットアップ手順
+```bash
+git clone https://github.com/bird-dance-dev/log-search-platform.git
+cd log-search-platform
+docker compose up
+```
+ブラウザで http://localhost:8080 にアクセスし、デモアカウントでログインしてください。\
+※ DB接続情報はdocker-compose.ymlにデフォルト値が設定されているため、.envの作成は不要です。本番環境では.envで上書きしてください。
+
+## API一覧（Swagger）
+http://localhost:3000/api#/ \
+※開発・テスト用
+
+## ローカル開発
+PostgreSQLのみDockerで起動し、backend・frontendはローカルで動かす方法です。
+```bash
+# PostgreSQL起動
+docker compose up postgres -d
+
+# Backend起動
+cd backend
+cp .env.example .env
+npm install
+npx prisma migrate deploy
+npm run start:dev
+
+# Frontend起動（別ターミナル）
+cd frontend
+npm install
+npm run dev
+```
+ブラウザで http://localhost:5173 にアクセスしてください。\
+※ DB接続情報は.env.exampleをコピー
+
+## 大量データ投入
+登録・検索パフォーマンスを検証したい場合、CLIで件数を指定してログデータを投入できます。
+```bash
+cd scripts
+npm install
+npx tsx seed.ts --count 100
+```
+※ バックエンドが起動している状態で実行してください。
+- 「--count」ではテナントあたりのログ数を指定します。
+- ログタイプ6種 × 2テナント分のデータが生成されます。
+- 例：「--count 100」→ 各ログタイプ17件 × 6種 × 2テナント = 204件
+### 投入速度の目安
+| 件数 | 所要時間 |
+|------|---------|
+| 10万件 | 57秒 |
+| 100万件 | 約16分（978秒） |

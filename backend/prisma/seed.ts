@@ -11,6 +11,13 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  // 既にデータがある場合はスキップ
+  const tenantCount = await prisma.tenant.count();
+  if (tenantCount > 0) {
+    console.log('✅ シードデータは既に存在します。スキップします。');
+    return;
+  }
+
   // ---- テナント ----
   const tenantA = await prisma.tenant.create({
     data: { name: 'A社' },
@@ -140,6 +147,31 @@ async function main() {
       dataRoleId: limitedAccessB.id,
     },
   });
+
+  // ---- サンプルイベントデータ（100件） ----
+  const { generateSampleEvents } = await import('./seed-events.js');
+  const sampleEvents = generateSampleEvents([
+    {
+      tenantId: tenantA.id,
+      namespaces: [
+        { namespaceId: nsA.id, count: 18 },
+        { namespaceId: nsB.id, count: 17 },
+        { namespaceId: nsC.id, count: 15 },
+      ],
+    },
+    {
+      tenantId: tenantB.id,
+      namespaces: [
+        { namespaceId: nsD.id, count: 18 },
+        { namespaceId: nsE.id, count: 17 },
+        { namespaceId: nsF.id, count: 15 },
+      ],
+    },
+  ]);
+  for (const event of sampleEvents) {
+    await prisma.event.create({ data: event });
+  }
+  console.log(`✅ サンプルイベント ${sampleEvents.length} 件投入完了`);
 
   console.log('✅ シードデータ投入完了');
 }
