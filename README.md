@@ -74,6 +74,7 @@ graph LR
 - 初期設定では、ユーザーAは、namespaceA, B, C全て表示。ユーザーBはnamespaceAのみ表示
 - 同様に、ユーザーCは、namespaceD, E, F全て表示。ユーザーDはnamespaceDのみ表示
 - 画面上で、各ユーザーのnamespace設定を変更可能
+- DB上は新規namespaceの追加が可能となるよう設計済み
 
 ## デモアカウント一覧
 
@@ -93,7 +94,7 @@ cd log-search-platform
 docker compose up
 ```
 ブラウザで http://localhost:8080 にアクセスし、デモアカウントでログインしてください。\
-※ DB接続情報はdocker-compose.ymlにデフォルト値が設定されているため、.envの作成は不要です。本番環境では.envで上書きしてください。
+※ DB接続情報・JWT秘密鍵はdocker-compose.ymlにデフォルト値が設定されているため、.envの作成は不要です。本番環境では.envで適切な値を設定してください。
 
 ## API一覧（Swagger）
 http://localhost:3000/api#/ \

@@ -18,6 +18,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-log_search_user}:${POSTGRES_PASSWORD:-log_search_pass}@postgres:5432/${POSTGRES_DB:-log_search_platform_db}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key}
     depends_on:
       - postgres
 
