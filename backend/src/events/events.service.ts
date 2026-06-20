@@ -202,26 +202,34 @@ export class EventsService {
 
     private parseCondition(condition: string): any {
         // LIKE: field LIKE "value"
-        const likeMatch = condition.match(/^(\w+)\s+LIKE\s+"(.+)"$/);
+        const likeMatch = condition.match(/^([\w.]+)\s+LIKE\s+"(.+)"$/);
         if (likeMatch) {
         const [, field, value] = likeMatch;
-        return { [field]: { contains: value, mode: 'insensitive' } };
+        return this.buildWhere(field, { contains: value, mode: 'insensitive' });
         }
 
         // !=: field!="value"
-        const neqMatch = condition.match(/^(\w+)\s*!=\s*"(.+)"$/);
+        const neqMatch = condition.match(/^([\w.]+)\s*!=\s*"(.+)"$/);
         if (neqMatch) {
         const [, field, value] = neqMatch;
-        return { [field]: { not: value } };
+        return this.buildWhere(field, { not: value });
         }
 
         // =: field="value"
-        const eqMatch = condition.match(/^(\w+)\s*=\s*"(.+)"$/);
+        const eqMatch = condition.match(/^([\w.]+)\s*=\s*"(.+)"$/);
         if (eqMatch) {
         const [, field, value] = eqMatch;
-        return { [field]: value };
+        return this.buildWhere(field, value);
         }
 
         return null;
+    }
+
+    private buildWhere(field: string, value: any): any {
+        if (field.includes('.')) {
+            const [relation, column] = field.split('.');
+            return { [relation]: { some: { [column]: value } } };
+        }
+        return { [field]: value };
     }
 }

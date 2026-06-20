@@ -121,7 +121,7 @@ function App() {
         <>
           <SearchBar onSearch={handleSearch} />
           <Typography variant="body2" sx={{ mb: 1 }} color="text.secondary">
-            {result.total} events found
+            {result.total}件のログが見つかりました
           </Typography>
           <EventsTable
             events={result.data}

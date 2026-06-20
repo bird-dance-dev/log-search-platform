@@ -1,7 +1,8 @@
 ## プロダクト概要
 実務でGoogle SecOpsの導入支援に関わる中で、導入よりも製品を作る側への思いが強くなり、ログ検索プラットフォームをテーマに設計・実装しました。\
 ログ取込を始め、ログ検索、テナント分離、２軸（機能RBAC・データRBAC）独立の権限管理を実現しています。\
-特に、テナント分離・権限管理はSaaSプロダクトの根幹機能のため、拡張性を意識して設計判断しました。
+特に、テナント分離・権限管理はSaaSプロダクトの根幹機能のため、拡張性を意識して設計判断しました。\
+※ バックエンドの設計・実装が主軸のため、フロントエンドは動作確認に必要な最低限の実装としています。
 
 ## 技術スタック
 ### バックエンド
@@ -93,8 +94,25 @@ git clone https://github.com/bird-dance-dev/log-search-platform.git
 cd log-search-platform
 docker compose up
 ```
-ブラウザで http://localhost:8080 にアクセスし、デモアカウントでログインしてください。\
+ブラウザで http://localhost:8080 にアクセスし、デモアカウントでログインしてください\
 ※ DB接続情報・JWT秘密鍵はdocker-compose.ymlにデフォルト値が設定されているため、.envの作成は不要です。本番環境では.envで適切な値を設定してください。
+
+## 検索条件のサンプル
+検索画面のフィルター欄に以下の形式で入力できます。
+| 検索例 | 説明 |
+|-------|------|
+| （空欄のまま検索） | 全件表示 |
+| `metadata_eventType = "NETWORK_HTTP"` | イベント種別で絞り込み |
+| `metadata_logType = "OFFICE_365"` | ログタイプで絞り込み |
+| `principal_user_email = "tanaka@corp.example.com"` | 行為者のメールアドレスで絞り込み |
+| `principal_ip = "10.0.113.23"` | 行為者のIPアドレスで絞り込み |
+| `securityResults.action = "BLOCK"` | セキュリティ結果のアクションで絞り込み |
+| `securityResults.severity = "HIGH"` | セキュリティ結果の重大度で絞り込み |
+| `securityResults.action != "BLOCK"` | ALLOW以外のアクションで絞り込み（!=） |
+| `principal_user_email LIKE "tanaka"` | メールアドレスの部分一致検索（LIKE） |
+| `metadata_eventType = "NETWORK_HTTP" AND principal_user_email = "tanaka@corp.example.com"` | AND条件で複合検索 |
+
+※ 時間範囲はStart・Endにて指定できます。
 
 ## API一覧（Swagger）
 http://localhost:3000/api#/ \

@@ -42,7 +42,14 @@ export default function EventsTable({
             </TableRow>
           </TableHead>
           <TableBody>
-            {events.map((event) => (
+            {events.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  検索結果が見つかりませんでした
+                </TableCell>
+              </TableRow>
+            ) : (
+              events.map((event) => (
               <TableRow
                 key={event.id}
                 hover
@@ -73,7 +80,7 @@ export default function EventsTable({
                   ) : '-'}
                 </TableCell>
               </TableRow>
-            ))}
+            )))}
           </TableBody>
         </Table>
       </TableContainer>
