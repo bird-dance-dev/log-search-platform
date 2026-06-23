@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 @Injectable()
@@ -28,7 +32,11 @@ export class SettingsService {
   }
 
   // ユーザーデータロール更新
-  async updateUserDataRole(tenantId: string, userId: string, dataRoleId: string) {
+  async updateUserDataRole(
+    tenantId: string,
+    userId: string,
+    dataRoleId: string,
+  ) {
     const user = await this.prisma.user.findFirst({
       where: { tenantId, id: userId },
       include: { functionalRole: true },
@@ -75,7 +83,11 @@ export class SettingsService {
   }
 
   // データロールのnamespace更新
-  async updateDataRoleNamespaces(tenantId: string, dataRoleId: string, namespaceIds: string[]) {
+  async updateDataRoleNamespaces(
+    tenantId: string,
+    dataRoleId: string,
+    namespaceIds: string[],
+  ) {
     const dataRole = await this.prisma.dataRole.findFirst({
       where: { tenantId, id: dataRoleId },
     });
@@ -91,7 +103,7 @@ export class SettingsService {
     // 新しい紐づけを作成
     if (namespaceIds.length > 0) {
       await this.prisma.dataRoleNamespace.createMany({
-        data: namespaceIds.map(namespaceId => ({
+        data: namespaceIds.map((namespaceId) => ({
           tenantId,
           dataRoleId,
           namespaceId,

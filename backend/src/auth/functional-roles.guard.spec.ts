@@ -8,7 +8,8 @@ describe('FunctionalRolesGuard', () => {
   let reflector: Reflector;
 
   // モック化されたExecutionContextを生成するヘルパー
-  const createMockContext = (user: any): ExecutionContext => ({
+  const createMockContext = (user: any): ExecutionContext =>
+    ({
       getHandler: jest.fn(),
       switchToHttp: () => ({
         getRequest: () => ({ user }),
@@ -40,7 +41,9 @@ describe('FunctionalRolesGuard', () => {
   describe('機能ロールによるアクセス制御', () => {
     it('許可ロールに含まれている場合、trueを返す', () => {
       // Arrange: 管理者ロールが許可されたエンドポイント
-      jest.spyOn(reflector, 'get').mockReturnValue([FUNCTIONAL_ROLES.ADMIN, FUNCTIONAL_ROLES.USER]);
+      jest
+        .spyOn(reflector, 'get')
+        .mockReturnValue([FUNCTIONAL_ROLES.ADMIN, FUNCTIONAL_ROLES.USER]);
       const context = createMockContext({
         functionalRoleName: FUNCTIONAL_ROLES.ADMIN,
       });
@@ -54,7 +57,9 @@ describe('FunctionalRolesGuard', () => {
 
     it('一般ユーザーでも許可ロールに含まれていれば通過する', () => {
       // Arrange
-      jest.spyOn(reflector, 'get').mockReturnValue([FUNCTIONAL_ROLES.ADMIN, FUNCTIONAL_ROLES.USER]);
+      jest
+        .spyOn(reflector, 'get')
+        .mockReturnValue([FUNCTIONAL_ROLES.ADMIN, FUNCTIONAL_ROLES.USER]);
       const context = createMockContext({
         functionalRoleName: FUNCTIONAL_ROLES.USER,
       });
@@ -83,8 +88,12 @@ describe('FunctionalRolesGuard', () => {
 
     it('未知のロール名ではアクセスが拒否される', () => {
       // Arrange
-      jest.spyOn(reflector, 'get').mockReturnValue([FUNCTIONAL_ROLES.ADMIN, FUNCTIONAL_ROLES.USER]);
-      const context = createMockContext({ functionalRoleName: '未知のロール' });
+      jest
+        .spyOn(reflector, 'get')
+        .mockReturnValue([FUNCTIONAL_ROLES.ADMIN, FUNCTIONAL_ROLES.USER]);
+      const context = createMockContext({
+        functionalRoleName: '未知のロール',
+      });
 
       // Act
       const act = () => guard.canActivate(context);

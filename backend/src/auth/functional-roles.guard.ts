@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 @Injectable()
@@ -7,11 +12,16 @@ export class FunctionalRolesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     // エンドポイントに設定されたロールを取得
-    const requiredFunctionalRoles = this.reflector.get<string[]>('functionalRoles', context.getHandler());
+    const requiredFunctionalRoles = this.reflector.get<string[]>(
+      'functionalRoles',
+      context.getHandler(),
+    );
 
     // ロール指定がなければデフォルト拒否
     if (!requiredFunctionalRoles) {
-      throw new ForbiddenException('このエンドポイントにはロールが設定されていません');
+      throw new ForbiddenException(
+        'このエンドポイントにはロールが設定されていません',
+      );
     }
 
     // JWTから取得したユーザー情報を取り出す

@@ -1,4 +1,12 @@
-import { Controller, Get, Patch, Param, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { FunctionalRolesGuard } from '../auth/functional-roles.guard.js';
@@ -35,7 +43,11 @@ export class SettingsController {
     @Param('userId') userId: string,
     @Body('dataRoleId') dataRoleId: string,
   ) {
-    return this.settingsService.updateUserDataRole(req.user.tenantId, userId, dataRoleId);
+    return this.settingsService.updateUserDataRole(
+      req.user.tenantId,
+      userId,
+      dataRoleId,
+    );
   }
 
   // データロール
@@ -61,7 +73,11 @@ export class SettingsController {
     @Param('dataRoleId') dataRoleId: string,
     @Body('namespaceIds') namespaceIds: string[],
   ) {
-    return this.settingsService.updateDataRoleNamespaces(req.user.tenantId, dataRoleId, namespaceIds);
+    return this.settingsService.updateDataRoleNamespaces(
+      req.user.tenantId,
+      dataRoleId,
+      namespaceIds,
+    );
   }
 
   // Namespace

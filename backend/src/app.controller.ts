@@ -5,5 +5,5 @@ export class AppController {
   @Get()
   healthCheck() {
     return { status: 'ok' };
-  } 
+  }
 }

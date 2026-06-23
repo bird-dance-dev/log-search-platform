@@ -21,7 +21,11 @@ describe('AuthService', () => {
     tenantId: 'tenant-a',
     functionalRoleId: 'role-admin',
     dataRoleId: 'data-role-full',
-    functionalRole: { id: 'role-admin', name: '管理者', tenantId: 'tenant-a' },
+    functionalRole: {
+      id: 'role-admin',
+      name: '管理者',
+      tenantId: 'tenant-a',
+    },
   };
 
   beforeEach(async () => {

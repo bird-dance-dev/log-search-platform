@@ -5,231 +5,235 @@ import { SearchEventDto } from './dto/search-event.dto.js';
 
 @Injectable()
 export class EventsService {
-    constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
-    async create(tenantId: string, dto: CreateEventDto) {
-        return this.prisma.event.create({
-            data: {
-                tenantId,
-                namespaceId: dto.namespaceId,
-                metadata_eventTimestamp: new Date(dto.metadata_eventTimestamp),
-                metadata_eventType: dto.metadata_eventType,
-                metadata_logType: dto.metadata_logType,
-                metadata_vendorName: dto.metadata_vendorName,
-                metadata_productName: dto.metadata_productName,
-                principal_hostname: dto.principal_hostname,
-                principal_ip: dto.principal_ip,
-                principal_user_userid: dto.principal_user_userid,
-                principal_user_email: dto.principal_user_email,
-                principal_process_pid: dto.principal_process_pid,
-                principal_process_commandLine: dto.principal_process_commandLine,
-                target_hostname: dto.target_hostname,
-                target_ip: dto.target_ip,
-                target_user_userid: dto.target_user_userid,
-                target_user_email: dto.target_user_email,
-                target_url: dto.target_url,
-                target_resourceName: dto.target_resourceName,
-                securityResults: dto.securityResults
-                ? {
-                    create: dto.securityResults.map((sr) => ({
-                        action: sr.action,
-                        severity: sr.severity,
-                        description: sr.description,
-                        category: sr.category,
-                    })),
-                    }
-                : undefined,
-            },
-            include: { securityResults: true },
-        });
-    }
-
-    async createBulk(tenantId: string, dtos: CreateEventDto[]) {
-
-        // eventsを一括INSERT
-        await this.prisma.event.createMany({
-            data: dtos.map((dto) => ({
-                tenantId,
-                namespaceId: dto.namespaceId,
-                metadata_eventTimestamp: new Date(dto.metadata_eventTimestamp),
-                metadata_eventType: dto.metadata_eventType,
-                metadata_logType: dto.metadata_logType,
-                metadata_vendorName: dto.metadata_vendorName,
-                metadata_productName: dto.metadata_productName,
-                principal_hostname: dto.principal_hostname,
-                principal_ip: dto.principal_ip,
-                principal_user_userid: dto.principal_user_userid,
-                principal_user_email: dto.principal_user_email,
-                principal_process_pid: dto.principal_process_pid,
-                principal_process_commandLine: dto.principal_process_commandLine,
-                target_hostname: dto.target_hostname,
-                target_ip: dto.target_ip,
-                target_user_userid: dto.target_user_userid,
-                target_user_email: dto.target_user_email,
-                target_url: dto.target_url,
-                target_resourceName: dto.target_resourceName,
-            })),
-        });
-
-        // 作成したeventsのIDを取得（直近のN件）
-        const createdEvents = await this.prisma.event.findMany({
-            where: { tenantId },
-            orderBy: { metadata_ingestedTimestamp: 'desc' },
-            take: dtos.length,
-            select: { id: true },
-        });
-
-        // securityResultsを一括INSERT
-        const securityResultsData = dtos.flatMap((dto, index) => {
-            if (!dto.securityResults?.length) return [];
-            const eventId = createdEvents[index]?.id;
-            if (!eventId) return [];
-            return dto.securityResults.map((sr) => ({
-                eventId,
+  async create(tenantId: string, dto: CreateEventDto) {
+    return this.prisma.event.create({
+      data: {
+        tenantId,
+        namespaceId: dto.namespaceId,
+        metadata_eventTimestamp: new Date(dto.metadata_eventTimestamp),
+        metadata_eventType: dto.metadata_eventType,
+        metadata_logType: dto.metadata_logType,
+        metadata_vendorName: dto.metadata_vendorName,
+        metadata_productName: dto.metadata_productName,
+        principal_hostname: dto.principal_hostname,
+        principal_ip: dto.principal_ip,
+        principal_user_userid: dto.principal_user_userid,
+        principal_user_email: dto.principal_user_email,
+        principal_process_pid: dto.principal_process_pid,
+        principal_process_commandLine: dto.principal_process_commandLine,
+        target_hostname: dto.target_hostname,
+        target_ip: dto.target_ip,
+        target_user_userid: dto.target_user_userid,
+        target_user_email: dto.target_user_email,
+        target_url: dto.target_url,
+        target_resourceName: dto.target_resourceName,
+        securityResults: dto.securityResults
+          ? {
+              create: dto.securityResults.map((sr) => ({
                 action: sr.action,
                 severity: sr.severity,
                 description: sr.description,
                 category: sr.category,
-            }));
-        });
-
-        if (securityResultsData.length > 0) {
-            await this.prisma.securityResult.createMany({
-                data: securityResultsData,
-            });
-        }
-
-        return { count: dtos.length, message: `${dtos.length} events created successfully` };
-    }
-
-    async search(tenantId: string, dataRoleId: string, dto: SearchEventDto) {
-        const page = Number(dto.page) || 1;
-        const limit = Number(dto.limit) || 50;
-        const skip = (page - 1) * limit;
-
-        // データロールに紐づく許可されたnamespaceIdを取得
-        const allowedNamespaces = await this.prisma.dataRoleNamespace.findMany({
-            where: { tenantId, dataRoleId },
-            select: { namespaceId: true },
-        });
-        const allowedNamespaceIds = allowedNamespaces.map(ns => ns.namespaceId);
-        
-        const where: any = {
-            tenantId,
-            namespaceId: { in: allowedNamespaceIds },
-        };
-
-        if (dto.startTime || dto.endTime) {
-            where.metadata_eventTimestamp = {};
-            if (dto.startTime) {
-                where.metadata_eventTimestamp.gte = new Date(dto.startTime);
+              })),
             }
-            if (dto.endTime) {
-                where.metadata_eventTimestamp.lte = new Date(dto.endTime);
-            }
-        }
+          : undefined,
+      },
+      include: { securityResults: true },
+    });
+  }
 
-        if (dto.filter) {
-            const filterConditions = this.parserFilter(dto.filter);
-            Object.assign(where, filterConditions);
-        }
+  async createBulk(tenantId: string, dtos: CreateEventDto[]) {
+    // eventsを一括INSERT
+    await this.prisma.event.createMany({
+      data: dtos.map((dto) => ({
+        tenantId,
+        namespaceId: dto.namespaceId,
+        metadata_eventTimestamp: new Date(dto.metadata_eventTimestamp),
+        metadata_eventType: dto.metadata_eventType,
+        metadata_logType: dto.metadata_logType,
+        metadata_vendorName: dto.metadata_vendorName,
+        metadata_productName: dto.metadata_productName,
+        principal_hostname: dto.principal_hostname,
+        principal_ip: dto.principal_ip,
+        principal_user_userid: dto.principal_user_userid,
+        principal_user_email: dto.principal_user_email,
+        principal_process_pid: dto.principal_process_pid,
+        principal_process_commandLine: dto.principal_process_commandLine,
+        target_hostname: dto.target_hostname,
+        target_ip: dto.target_ip,
+        target_user_userid: dto.target_user_userid,
+        target_user_email: dto.target_user_email,
+        target_url: dto.target_url,
+        target_resourceName: dto.target_resourceName,
+      })),
+    });
 
-        const [data, total] = await Promise.all([
-            this.prisma.event.findMany({
-                where,
-                include: {securityResults: true },
-                orderBy: {metadata_eventTimestamp: 'desc' },
-                skip,
-                take: limit,
-            }),
-            this.prisma.event.count({ where }),
-        ]);
+    // 作成したeventsのIDを取得（直近のN件）
+    const createdEvents = await this.prisma.event.findMany({
+      where: { tenantId },
+      orderBy: { metadata_ingestedTimestamp: 'desc' },
+      take: dtos.length,
+      select: { id: true },
+    });
 
-        return { data, total, page, limit };
+    // securityResultsを一括INSERT
+    const securityResultsData = dtos.flatMap((dto, index) => {
+      if (!dto.securityResults?.length) return [];
+      const eventId = createdEvents[index]?.id;
+      if (!eventId) return [];
+      return dto.securityResults.map((sr) => ({
+        eventId,
+        action: sr.action,
+        severity: sr.severity,
+        description: sr.description,
+        category: sr.category,
+      }));
+    });
+
+    if (securityResultsData.length > 0) {
+      await this.prisma.securityResult.createMany({
+        data: securityResultsData,
+      });
     }
 
-    async findOne(tenantId: string, dataRoleId: string, id: string) {
+    return {
+      count: dtos.length,
+      message: `${dtos.length} events created successfully`,
+    };
+  }
 
-        // データロールに紐づく許可されたnamespaceIdを取得
-        const allowedNamespaces = await this.prisma.dataRoleNamespace.findMany({
-            where: { tenantId, dataRoleId },
-            select: { namespaceId: true },
-        });
-        const allowedNamespaceIds = allowedNamespaces.map(ns => ns.namespaceId);
+  async search(tenantId: string, dataRoleId: string, dto: SearchEventDto) {
+    const page = Number(dto.page) || 1;
+    const limit = Number(dto.limit) || 50;
+    const skip = (page - 1) * limit;
 
-        const event = await this.prisma.event.findFirst({
-            where: {
-                id,
-                tenantId,
-                namespaceId: { in: allowedNamespaceIds },
-            },
-            include: { securityResults: true },
-        });
+    // データロールに紐づく許可されたnamespaceIdを取得
+    const allowedNamespaces = await this.prisma.dataRoleNamespace.findMany({
+      where: { tenantId, dataRoleId },
+      select: { namespaceId: true },
+    });
+    const allowedNamespaceIds = allowedNamespaces.map((ns) => ns.namespaceId);
 
-        if (!event) {
-            throw new NotFoundException(`Event ${id} not found`);
-        }
+    const where: any = {
+      tenantId,
+      namespaceId: { in: allowedNamespaceIds },
+    };
 
-        return event;
+    if (dto.startTime || dto.endTime) {
+      where.metadata_eventTimestamp = {};
+      if (dto.startTime) {
+        where.metadata_eventTimestamp.gte = new Date(dto.startTime);
+      }
+      if (dto.endTime) {
+        where.metadata_eventTimestamp.lte = new Date(dto.endTime);
+      }
     }
 
-    private parserFilter(filter: string): any {
-        // OR で分割
-        const orGroups = filter.split(/\s+OR\s+/);
-
-        if (orGroups.length > 1) {
-            return {
-                OR: orGroups.map((group) => this.parseAndGroup(group)),
-            };
-        }
-
-        return this.parseAndGroup(filter);
+    if (dto.filter) {
+      const filterConditions = this.parserFilter(dto.filter);
+      Object.assign(where, filterConditions);
     }
 
-    private parseAndGroup(group: string): any {
-        const conditions = group.split(/\s+AND\s+/);
-        const where: any = {};
+    const [data, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where,
+        include: { securityResults: true },
+        orderBy: { metadata_eventTimestamp: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.event.count({ where }),
+    ]);
 
-        for (const condition of conditions) {
-            const parsed = this.parseCondition(condition.trim());
-            if (parsed) {
-                Object.assign(where, parsed);
-            }
-        }
+    return { data, total, page, limit };
+  }
 
-        return where;
+  async findOne(tenantId: string, dataRoleId: string, id: string) {
+    // データロールに紐づく許可されたnamespaceIdを取得
+    const allowedNamespaces = await this.prisma.dataRoleNamespace.findMany({
+      where: { tenantId, dataRoleId },
+      select: { namespaceId: true },
+    });
+    const allowedNamespaceIds = allowedNamespaces.map((ns) => ns.namespaceId);
+
+    const event = await this.prisma.event.findFirst({
+      where: {
+        id,
+        tenantId,
+        namespaceId: { in: allowedNamespaceIds },
+      },
+      include: { securityResults: true },
+    });
+
+    if (!event) {
+      throw new NotFoundException(`Event ${id} not found`);
     }
 
-    private parseCondition(condition: string): any {
-        // LIKE: field LIKE "value"
-        const likeMatch = condition.match(/^([\w.]+)\s+LIKE\s+"(.+)"$/);
-        if (likeMatch) {
-        const [, field, value] = likeMatch;
-        return this.buildWhere(field, { contains: value, mode: 'insensitive' });
-        }
+    return event;
+  }
 
-        // !=: field!="value"
-        const neqMatch = condition.match(/^([\w.]+)\s*!=\s*"(.+)"$/);
-        if (neqMatch) {
-        const [, field, value] = neqMatch;
-        return this.buildWhere(field, { not: value });
-        }
+  private parserFilter(filter: string): any {
+    // OR で分割
+    const orGroups = filter.split(/\s+OR\s+/);
 
-        // =: field="value"
-        const eqMatch = condition.match(/^([\w.]+)\s*=\s*"(.+)"$/);
-        if (eqMatch) {
-        const [, field, value] = eqMatch;
-        return this.buildWhere(field, value);
-        }
-
-        return null;
+    if (orGroups.length > 1) {
+      return {
+        OR: orGroups.map((group) => this.parseAndGroup(group)),
+      };
     }
 
-    private buildWhere(field: string, value: any): any {
-        if (field.includes('.')) {
-            const [relation, column] = field.split('.');
-            return { [relation]: { some: { [column]: value } } };
-        }
-        return { [field]: value };
+    return this.parseAndGroup(filter);
+  }
+
+  private parseAndGroup(group: string): any {
+    const conditions = group.split(/\s+AND\s+/);
+    const where: any = {};
+
+    for (const condition of conditions) {
+      const parsed = this.parseCondition(condition.trim());
+      if (parsed) {
+        Object.assign(where, parsed);
+      }
     }
+
+    return where;
+  }
+
+  private parseCondition(condition: string): any {
+    // LIKE: field LIKE "value"
+    const likeMatch = condition.match(/^([\w.]+)\s+LIKE\s+"(.+)"$/);
+    if (likeMatch) {
+      const [, field, value] = likeMatch;
+      return this.buildWhere(field, {
+        contains: value,
+        mode: 'insensitive',
+      });
+    }
+
+    // !=: field!="value"
+    const neqMatch = condition.match(/^([\w.]+)\s*!=\s*"(.+)"$/);
+    if (neqMatch) {
+      const [, field, value] = neqMatch;
+      return this.buildWhere(field, { not: value });
+    }
+
+    // =: field="value"
+    const eqMatch = condition.match(/^([\w.]+)\s*=\s*"(.+)"$/);
+    if (eqMatch) {
+      const [, field, value] = eqMatch;
+      return this.buildWhere(field, value);
+    }
+
+    return null;
+  }
+
+  private buildWhere(field: string, value: any): any {
+    if (field.includes('.')) {
+      const [relation, column] = field.split('.');
+      return { [relation]: { some: { [column]: value } } };
+    }
+    return { [field]: value };
+  }
 }
