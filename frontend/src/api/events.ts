@@ -46,7 +46,9 @@ export interface SearchParams {
   limit?: number;
 }
 
-export const searchEvents = async (params: SearchParams): Promise<SearchResponse> => {
+export const searchEvents = async (
+  params: SearchParams,
+): Promise<SearchResponse> => {
   const response = await apiClient.get<SearchResponse>('/events', { params });
   return response.data;
 };

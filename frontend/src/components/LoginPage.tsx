@@ -27,7 +27,11 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       <Typography variant="h5" sx={{ mb: 3, textAlign: 'center' }}>
         Log Search Platform
       </Typography>
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
       <TextField
         label="メールアドレス"
         fullWidth

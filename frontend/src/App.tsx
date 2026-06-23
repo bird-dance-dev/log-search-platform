@@ -1,5 +1,15 @@
-import { useState, useEffect } from 'react'
-import { Container, Typography, Box, Dialog, DialogTitle, DialogContent, Tabs, Tab, Button } from '@mui/material';
+import { useState, useEffect } from 'react';
+import {
+  Container,
+  Typography,
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Tabs,
+  Tab,
+  Button,
+} from '@mui/material';
 import SearchBar from './components/SearchBar';
 import EventsTable from './components/EventsTable';
 import LoginPage from './components/LoginPage';
@@ -9,7 +19,9 @@ import { searchEvents, type Event, type SearchResponse } from './api/events';
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState('');
-  const [currentPage, setCurrentPage] = useState<'search' | 'settings'>('search');
+  const [currentPage, setCurrentPage] = useState<'search' | 'settings'>(
+    'search',
+  );
 
   const [result, setResult] = useState<SearchResponse>({
     data: [],
@@ -31,7 +43,7 @@ function App() {
       atob(base64)
         .split('')
         .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
+        .join(''),
     );
     const payload = JSON.parse(jsonPayload);
     return payload.functionalRoleName;
@@ -72,7 +84,11 @@ function App() {
     setCurrentPage('search');
   };
 
-  const handleSearch = async (filter: string, startTime: string, endTime: string) => {
+  const handleSearch = async (
+    filter: string,
+    startTime: string,
+    endTime: string,
+  ) => {
     setCurrentFilter(filter);
     setCurrentStartTime(startTime);
     setCurrentEndTime(endTime);
@@ -90,8 +106,12 @@ function App() {
   const handlePageChange = async (page: number) => {
     const res = await searchEvents({
       filter: currentFilter || undefined,
-      startTime: currentStartTime ? new Date(currentStartTime).toISOString() : undefined,
-      endTime: currentEndTime ? new Date(currentEndTime).toISOString() : undefined,
+      startTime: currentStartTime
+        ? new Date(currentStartTime).toISOString()
+        : undefined,
+      endTime: currentEndTime
+        ? new Date(currentEndTime).toISOString()
+        : undefined,
       page,
       limit: 50,
     });
@@ -105,13 +125,26 @@ function App() {
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
         <Typography variant="h4">Log Search Platform</Typography>
-        <Button variant="outlined" onClick={handleLogout}>ログアウト</Button>
+        <Button variant="outlined" onClick={handleLogout}>
+          ログアウト
+        </Button>
       </Box>
 
       {/* メニュー：管理者のみ設定タブが見える */}
-      <Tabs value={currentPage} onChange={(_, v) => setCurrentPage(v)} sx={{ mb: 3 }}>
+      <Tabs
+        value={currentPage}
+        onChange={(_, v) => setCurrentPage(v)}
+        sx={{ mb: 3 }}
+      >
         <Tab label="検索" value="search" />
         {userRole === '管理者' && <Tab label="設定" value="settings" />}
       </Tabs>
@@ -140,7 +173,8 @@ function App() {
             {selectedEvent && (
               <>
                 <DialogTitle>
-                  {selectedEvent.metadata_eventType} - {selectedEvent.metadata_logType}
+                  {selectedEvent.metadata_eventType} -{' '}
+                  {selectedEvent.metadata_logType}
                 </DialogTitle>
                 <DialogContent>
                   <Box component="pre" sx={{ fontSize: 13, overflow: 'auto' }}>
@@ -159,4 +193,4 @@ function App() {
   );
 }
 
-export default App
+export default App;

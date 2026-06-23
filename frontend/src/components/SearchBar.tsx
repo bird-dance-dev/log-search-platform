@@ -32,7 +32,14 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           },
         }}
       />
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 2,
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end',
+        }}
+      >
         <TextField
           label="Start"
           type="datetime-local"

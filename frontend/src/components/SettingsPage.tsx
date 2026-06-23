@@ -1,13 +1,36 @@
 import { useState, useEffect } from 'react';
 import {
-  Box, Typography, Tabs, Tab, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, Select, MenuItem,
-  Button, Checkbox, FormControlLabel, FormGroup, Dialog,
-  DialogTitle, DialogContent, DialogActions,
+  Box,
+  Typography,
+  Tabs,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Select,
+  MenuItem,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  FormGroup,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
-  getUsers, getDataRoles, getNamespaces, updateUserDataRole,
-  updateDataRoleNamespaces, type User, type DataRole, type Namespace,
+  getUsers,
+  getDataRoles,
+  getNamespaces,
+  updateUserDataRole,
+  updateDataRoleNamespaces,
+  type User,
+  type DataRole,
+  type Namespace,
 } from '../api/settings';
 
 const SettingsPage = () => {
@@ -18,27 +41,38 @@ const SettingsPage = () => {
 
   // データロール編集用
   const [editingRole, setEditingRole] = useState<DataRole | null>(null);
-  const [selectedNamespaceIds, setSelectedNamespaceIds] = useState<string[]>([]);
+  const [selectedNamespaceIds, setSelectedNamespaceIds] = useState<string[]>(
+    [],
+  );
 
   const loadData = async () => {
-    const [u, d, n] = await Promise.all([getUsers(), getDataRoles(), getNamespaces()]);
+    const [u, d, n] = await Promise.all([
+      getUsers(),
+      getDataRoles(),
+      getNamespaces(),
+    ]);
     setUsers(u);
     setDataRoles(d);
     setNamespaces(n);
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadData();
+  }, []);
 
   // アカウントのデータロール変更
-  const handleUserDataRoleChange = async (userId: string, dataRoleId: string) => {
-    const user = users.find(u => u.id === userId);
-    const role = dataRoles.find(r => r.id === dataRoleId);
+  const handleUserDataRoleChange = async (
+    userId: string,
+    dataRoleId: string,
+  ) => {
+    const user = users.find((u) => u.id === userId);
+    const role = dataRoles.find((r) => r.id === dataRoleId);
     const confirmed = window.confirm(
-        `${user?.name} のデータロールを「${role?.name}」に変更しますか？`
+      `${user?.name} のデータロールを「${role?.name}」に変更しますか？`,
     );
     if (!confirmed) {
-        await loadData(); // キャンセル時にドロップダウンを元に戻す
-        return;
+      await loadData(); // キャンセル時にドロップダウンを元に戻す
+      return;
     }
     await updateUserDataRole(userId, dataRoleId);
     await loadData();
@@ -47,15 +81,15 @@ const SettingsPage = () => {
   // データロールのnamespace編集ダイアログを開く
   const openNamespaceEditor = (role: DataRole) => {
     setEditingRole(role);
-    setSelectedNamespaceIds(role.namespaces?.map(n => n.namespaceId) || []);
+    setSelectedNamespaceIds(role.namespaces?.map((n) => n.namespaceId) || []);
   };
 
   // namespace選択のトグル
   const toggleNamespace = (namespaceId: string) => {
-    setSelectedNamespaceIds(prev =>
+    setSelectedNamespaceIds((prev) =>
       prev.includes(namespaceId)
-        ? prev.filter(id => id !== namespaceId)
-        : [...prev, namespaceId]
+        ? prev.filter((id) => id !== namespaceId)
+        : [...prev, namespaceId],
     );
   };
 
@@ -69,7 +103,9 @@ const SettingsPage = () => {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2 }}>設定</Typography>
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        設定
+      </Typography>
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
         <Tab label="アカウント" />
         <Tab label="データロール" />
@@ -88,7 +124,7 @@ const SettingsPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {users.map(user => (
+              {users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -97,11 +133,15 @@ const SettingsPage = () => {
                     <Select
                       size="small"
                       value={user.dataRoleId}
-                      onChange={(e) => handleUserDataRoleChange(user.id, e.target.value)}
+                      onChange={(e) =>
+                        handleUserDataRoleChange(user.id, e.target.value)
+                      }
                       disabled={user.functionalRole.name === '管理者'}
                     >
-                      {dataRoles.map(role => (
-                        <MenuItem key={role.id} value={role.id}>{role.name}</MenuItem>
+                      {dataRoles.map((role) => (
+                        <MenuItem key={role.id} value={role.id}>
+                          {role.name}
+                        </MenuItem>
                       ))}
                     </Select>
                   </TableCell>
@@ -124,17 +164,20 @@ const SettingsPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {dataRoles.map(role => (
+              {dataRoles.map((role) => (
                 <TableRow key={role.id}>
                   <TableCell>{role.name}</TableCell>
                   <TableCell>
                     {role.namespaces
-                      ?.map(n => n.namespace.name)
+                      ?.map((n) => n.namespace.name)
                       .sort()
                       .join(', ') || 'なし'}
                   </TableCell>
                   <TableCell>
-                    <Button size="small" onClick={() => openNamespaceEditor(role)}>
+                    <Button
+                      size="small"
+                      onClick={() => openNamespaceEditor(role)}
+                    >
                       編集
                     </Button>
                   </TableCell>
@@ -150,7 +193,7 @@ const SettingsPage = () => {
         <DialogTitle>{editingRole?.name} のNamespace設定</DialogTitle>
         <DialogContent>
           <FormGroup>
-            {namespaces.map(ns => (
+            {namespaces.map((ns) => (
               <FormControlLabel
                 key={ns.id}
                 control={
@@ -166,7 +209,9 @@ const SettingsPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditingRole(null)}>キャンセル</Button>
-          <Button variant="contained" onClick={handleSaveNamespaces}>保存</Button>
+          <Button variant="contained" onClick={handleSaveNamespaces}>
+            保存
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -49,8 +49,14 @@ export const getUser = async (userId: string): Promise<User> => {
   return response.data;
 };
 
-export const updateUserDataRole = async (userId: string, dataRoleId: string): Promise<User> => {
-  const response = await apiClient.patch<User>(`/settings/users/${userId}/data-role`, { dataRoleId });
+export const updateUserDataRole = async (
+  userId: string,
+  dataRoleId: string,
+): Promise<User> => {
+  const response = await apiClient.patch<User>(
+    `/settings/users/${userId}/data-role`,
+    { dataRoleId },
+  );
   return response.data;
 };
 
@@ -60,7 +66,9 @@ export const getDataRoles = async (): Promise<DataRole[]> => {
 };
 
 export const getDataRole = async (dataRoleId: string): Promise<DataRole> => {
-  const response = await apiClient.get<DataRole>(`/settings/data-roles/${dataRoleId}`);
+  const response = await apiClient.get<DataRole>(
+    `/settings/data-roles/${dataRoleId}`,
+  );
   return response.data;
 };
 
@@ -69,7 +77,13 @@ export const getNamespaces = async (): Promise<Namespace[]> => {
   return response.data;
 };
 
-export const updateDataRoleNamespaces = async (dataRoleId: string, namespaceIds: string[]): Promise<DataRole> => {
-  const response = await apiClient.patch<DataRole>(`/settings/data-roles/${dataRoleId}/namespaces`, { namespaceIds });
+export const updateDataRoleNamespaces = async (
+  dataRoleId: string,
+  namespaceIds: string[],
+): Promise<DataRole> => {
+  const response = await apiClient.patch<DataRole>(
+    `/settings/data-roles/${dataRoleId}/namespaces`,
+    { namespaceIds },
+  );
   return response.data;
 };
