@@ -3,6 +3,10 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service.js';
 import * as bcrypt from 'bcrypt';
 
+// 認証エラーメッセージ
+const INVALID_CREDENTIALS_MESSAGE =
+  'メールアドレスまたはパスワードが正しくありません';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -19,13 +23,13 @@ export class AuthService {
 
     // ユーザーが見つからなければエラー
     if (!user) {
-      throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
     // パスワードの照合
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません');
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
     // JWTトークンを生成して返す
