@@ -46,6 +46,9 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
         sx={{ mb: 3 }}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleLogin();
+        }}
       />
       <Button variant="contained" fullWidth onClick={handleLogin}>
         ログイン

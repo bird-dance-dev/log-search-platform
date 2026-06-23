@@ -34,6 +34,7 @@ function App() {
   const [currentFilter, setCurrentFilter] = useState('');
   const [currentStartTime, setCurrentStartTime] = useState('');
   const [currentEndTime, setCurrentEndTime] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
 
   // トークンからロール情報を取得
   const parseToken = (token: string) => {
@@ -74,6 +75,7 @@ function App() {
       setUserRole(role);
       setIsLoggedIn(true);
       setResult({ data: [], total: 0, page: 1, limit: 50 });
+      setHasSearched(false);
     }
   };
 
@@ -82,6 +84,7 @@ function App() {
     setIsLoggedIn(false);
     setUserRole('');
     setCurrentPage('search');
+    setHasSearched(false);
   };
 
   const handleSearch = async (
@@ -92,6 +95,7 @@ function App() {
     setCurrentFilter(filter);
     setCurrentStartTime(startTime);
     setCurrentEndTime(endTime);
+    setHasSearched(true);
 
     const res = await searchEvents({
       filter: filter || undefined,
@@ -153,17 +157,21 @@ function App() {
       {currentPage === 'search' && (
         <>
           <SearchBar onSearch={handleSearch} />
-          <Typography variant="body2" sx={{ mb: 1 }} color="text.secondary">
-            {result.total}件のログが見つかりました
-          </Typography>
-          <EventsTable
-            events={result.data}
-            total={result.total}
-            page={result.page}
-            limit={result.limit}
-            onPageChange={handlePageChange}
-            onRowClick={(event) => setSelectedEvent(event)}
-          />
+          {hasSearched && (
+            <Typography variant="body2" sx={{ mb: 1 }} color="text.secondary">
+              {result.total}件のログが見つかりました
+            </Typography>
+          )}
+          {hasSearched && (
+            <EventsTable
+              events={result.data}
+              total={result.total}
+              page={result.page}
+              limit={result.limit}
+              onPageChange={handlePageChange}
+              onRowClick={(event) => setSelectedEvent(event)}
+            />
+          )}
           <Dialog
             open={selectedEvent !== null}
             onClose={() => setSelectedEvent(null)}
